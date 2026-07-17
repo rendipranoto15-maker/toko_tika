@@ -1,0 +1,334 @@
+/* =========================================================
+   RESPONSIVE SYSTEM
+   Laptop/Desktop = layout statis (navbar atas, grid lebar)
+   HP/Mobile      = layout dinamis (bottom nav, drawer, 1 kolom)
+   Breakpoint     = 992px
+   ========================================================= */
+
+:root {
+    --bp-mobile: 992px;
+    --mobile-nav-height: 78px;
+}
+
+/* ── UTILITY: tampilkan/sembunyikan per perangkat ── */
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 992px) {
+    .mobile-only {
+        display: block !important;
+    }
+
+    .mobile-only.flex,
+    .mobile-only.is-flex {
+        display: flex !important;
+    }
+
+    .mobile-only.grid,
+    .mobile-only.is-grid {
+        display: grid !important;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+
+    .desktop-only.block,
+    .desktop-only.is-block {
+        display: none !important;
+    }
+}
+
+/* ── DESKTOP / LAPTOP: layout statis ── */
+@media (min-width: 993px) {
+    body.is-desktop {
+        padding-bottom: 0;
+    }
+
+    body.is-desktop .site-nav-row {
+        flex-wrap: nowrap;
+        min-height: 84px;
+    }
+
+    body.is-desktop .site-nav {
+        min-height: 84px;
+        padding: 0;
+    }
+
+    body.is-desktop .nav-menu {
+        display: flex !important;
+    }
+
+    body.is-desktop .nav-actions > a.btn {
+        display: inline-block !important;
+    }
+
+    body.is-desktop .nav-mobile-toggle,
+    body.is-desktop .mobile-bottom-nav,
+    body.is-desktop .mobile-drawer,
+    body.is-desktop .mobile-drawer-backdrop {
+        display: none !important;
+    }
+
+    body.is-desktop .topbar-insight {
+        display: none;
+    }
+
+    body.is-desktop .trust-strip {
+        display: block;
+    }
+
+    body.is-desktop .navbar-search {
+        flex: 0 1 340px;
+        max-width: 340px;
+        margin: 0 16px;
+        order: unset;
+        width: auto;
+        padding-bottom: 0;
+    }
+
+    body.is-desktop .brand p {
+        display: block;
+    }
+
+    body.is-desktop .back-to-top-btn {
+        bottom: 24px;
+    }
+
+    body.is-desktop .chatbot-toggle {
+        bottom: 24px;
+    }
+
+    body.is-desktop .chatbot-box {
+        bottom: 100px;
+    }
+
+    /* Grid statis lebar */
+    body.is-desktop .hero-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    body.is-desktop .feature-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    body.is-desktop .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        justify-content: stretch;
+    }
+
+    body.is-desktop .footer-grid-modern {
+        grid-template-columns: 1.35fr 0.8fr 0.9fr 1.2fr;
+    }
+
+    /* Hover & animasi halus khusus desktop */
+    body.is-desktop .product-card:hover,
+    body.is-desktop .feature-card:hover,
+    body.is-desktop .featured-category-card:hover {
+        transform: translateY(-8px);
+    }
+}
+
+/* ── MOBILE / HP: layout dinamis ── */
+@media (max-width: 992px) {
+    body.is-mobile {
+        padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.is-mobile .site-header {
+        position: sticky;
+        top: 0;
+    }
+
+    body.is-mobile .site-nav {
+        min-height: auto;
+        padding: 12px 0 0;
+    }
+
+    body.is-mobile .site-nav-row {
+        min-height: auto;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    body.is-mobile .brand {
+        order: 1;
+    }
+
+    body.is-mobile .nav-menu {
+        order: 2;
+        display: none !important;
+    }
+
+    body.is-mobile .nav-mobile-toggle {
+        order: 3;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+    }
+
+    body.is-mobile .nav-actions {
+        order: 4;
+    }
+
+    body.is-mobile .nav-actions > a.btn {
+        display: none !important;
+    }
+
+    body.is-mobile .navbar-search {
+        order: 5;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding-bottom: 12px;
+    }
+
+    body.is-mobile .brand p {
+        display: none;
+    }
+
+    body.is-mobile .brand h1 {
+        font-size: 17px;
+    }
+
+    body.is-mobile .brand-badge {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+    }
+
+    body.is-mobile .topbar-insight {
+        display: none;
+    }
+
+    body.is-mobile .trust-strip {
+        display: block;
+    }
+
+    body.is-mobile .mobile-bottom-nav {
+        display: grid;
+    }
+
+    body.is-mobile .mobile-bottom-nav.is-guest {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    body.is-mobile .mobile-bottom-nav.is-user {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    body.is-mobile .mobile-bottom-nav.is-admin {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    body.is-mobile .back-to-top-btn {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.is-mobile .chatbot-toggle {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.is-mobile .chatbot-box {
+        bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Grid dinamis 1-2 kolom */
+    body.is-mobile .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    body.is-mobile .feature-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    body.is-mobile .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    body.is-mobile .footer-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    /* Sentuh lebih mudah */
+    body.is-mobile .btn:not(.qty-btn):not(.toast-close):not(.icon-action-btn) {
+        min-height: 46px;
+    }
+
+    body.is-mobile .section {
+        padding: 48px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    body.is-mobile .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.is-mobile .container {
+        width: 92%;
+    }
+
+    body.is-mobile .hero-title {
+        font-size: clamp(28px, 8vw, 38px);
+    }
+
+    body.is-mobile .hero-card img {
+        height: 240px;
+    }
+
+    body.is-mobile .mobile-nav-item {
+        min-height: 52px;
+        font-size: 10px;
+    }
+
+    body.is-mobile .mobile-nav-item i {
+        font-size: 17px;
+    }
+
+    body.is-mobile .search-result-box {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        top: 120px;
+        max-height: 60vh;
+    }
+
+    body.is-mobile .mobile-drawer.active {
+        animation: slideDrawerIn 0.28s ease;
+    }
+
+    body.is-mobile .mobile-nav-item.is-active {
+        animation: navPulse 0.3s ease;
+    }
+
+    body.is-mobile .product-card,
+    body.is-mobile .feature-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    body.is-mobile .product-card:active,
+    body.is-mobile .feature-card:active {
+        transform: scale(0.98);
+    }
+}
+
+@keyframes slideDrawerIn {
+    from { right: -320px; }
+    to { right: 0; }
+}
+
+@keyframes navPulse {
+    0% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}

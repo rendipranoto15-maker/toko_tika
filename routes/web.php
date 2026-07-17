@@ -1,0 +1,94 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\ChatbotController;
+
+// ─────────────────────────────────────────
+// PUBLIC ROUTES
+// ─────────────────────────────────────────
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/search-products', [ProductController::class, 'search'])->name('products.search');
+Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+
+// Halaman Informasi
+Route::view('/tentang-kami', 'pages.about')->name('pages.about');
+Route::view('/faq', 'pages.faq')->name('pages.faq');
+Route::view('/kebijakan-privasi', 'pages.privacy')->name('pages.privacy');
+Route::view('/syarat-ketentuan', 'pages.terms')->name('pages.terms');
+Route::view('/cara-belanja', 'pages.how-to-shop')->name('pages.how-to-shop');
+
+// ✅ Chatbot — bisa diakses tanpa login
+Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])
+    ->name('chatbot.ask')
+    ->middleware('throttle:15,1');
+
+Route::post('/chatbot/reset', [ChatbotController::class, 'reset'])
+    ->name('chatbot.reset');
+
+// ─────────────────────────────────────────
+// USER ROUTES (harus login)
+// ─────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', fn() => redirect()->route('home'))->name('dashboard');
+
+    // Settings
+    Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
+    Route::put('/settings/profile', [\App\Http\Controllers\SettingController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::put('/settings/password', [\App\Http\Controllers\SettingController::class, 'updatePassword'])->name('settings.password.update');
+
+    // Keranjang
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/update/{item}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/buy-now/{product}', [CartController::class, 'buyNow'])->name('cart.buyNow');
+
+    // Pesanan
+    Route::get('/my-orders', [\App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/my-orders/{id}', [\App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
+    Route::get('/my-orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
+    Route::patch('/my-orders/{order}/upload-proof', [\App\Http\Controllers\OrderController::class, 'uploadProof'])->name('orders.upload-proof');
+    Route::patch('/my-orders/{order}/complete', [\App\Http\Controllers\OrderController::class, 'complete'])->name('orders.complete');
+    Route::patch('/my-orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+
+    // Checkout
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+
+    // ✅ Route QRIS — tempPayment & finalize
+    Route::get('/checkout/payment-temp', [CheckoutController::class, 'tempPayment'])->name('checkout.payment.temp');
+    Route::post('/checkout/finalize', [CheckoutController::class, 'finalize'])->name('checkout.finalize');
+
+    // ✅ Route upload proof untuk order yang sudah ada
+    Route::get('/checkout/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
+});
+
+// ─────────────────────────────────────────
+// ADMIN ROUTES
+// ─────────────────────────────────────────
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('/categories', AdminCategoryController::class);
+    Route::resource('/products', AdminProductController::class);
+
+    Route::resource('/orders', AdminOrderController::class)->only(['index', 'show', 'update']);
+    Route::patch('/orders/{order}/confirm-payment', [AdminOrderController::class, 'confirmPayment'])->name('orders.confirm-payment');
+    Route::patch('/orders/{order}/request-reupload', [AdminOrderController::class, 'requestReupload'])
+    ->name('orders.request-reupload');
+    Route::patch('/orders/{order}/fulfill-restock', [AdminOrderController::class, 'fulfillRestock'])->name('orders.fulfillRestock');
+    Route::patch('/orders/{order}/items/{item}/restock', [AdminOrderController::class, 'restockItem'])->name('orders.restockItem');
+});
+
+require __DIR__.'/auth.php';

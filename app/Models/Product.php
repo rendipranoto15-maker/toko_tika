@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'price',
+        'stock_quantity',
+        'stock_unit',
+        'stock_mode',
+        'unit_per_box',
+        'box_stock',
+        'restock_estimation',
+        'category_id',
+        'user_id',
+        'image',
+        'status',
+        'base_stock',
+    ];
+
+    // ─────────────────────────────────────────
+    // RELASI
+    // ─────────────────────────────────────────
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // ─────────────────────────────────────────
+    // HELPER / ACCESSOR
+    // ─────────────────────────────────────────
+
+    public function getDisplayPriceAttribute()
+    {
+        return $this->variants->count()
+            ? $this->variants->min('price')
+            : $this->price;
+    }
+
+    private function formatQty($qty): string
+    {
+        $formatted = number_format((float) $qty, 2, '.', '');
+        $formatted = rtrim($formatted, '0');
+        $formatted = rtrim($formatted, '.');
+
+        return $formatted;
+    }
+
+    public function getStockLabelAttribute()
+    {
+        $hasVariants = $this->relationLoaded('variants')
+            ? $this->variants->isNotEmpty()
+            : $this->variants()->exists();
+
+        if ($hasVariants) {
+
+            $gram = max(0, (float) $this->base_stock);
+
+            if ($gram >= 1000) {
+                return $this->formatQty($gram / 1000) . ' kg';
+            }
+
+            return $this->formatQty($gram) . ' gram';
+        }
+
+        return $this->formatQty(
+            max(0, $this->stock_quantity)
+        ) . ' ' . $this->stock_unit;
+    }
+
+    public function getAdminStockLabelAttribute()
+    {
+        $hasVariants = $this->relationLoaded('variants')
+            ? $this->variants->isNotEmpty()
+            : $this->variants()->exists();
+
+        if ($hasVariants) {
+
+            $gram = max(0, (float) $this->base_stock);
+
+            if ($gram >= 1000) {
+                return $this->formatQty($gram / 1000) . ' kg';
+            }
+
+            return $this->formatQty($gram) . ' gram';
+        }
+
+        if ($this->stock_mode === 'dus') {
+
+            return ($this->box_stock ?? 0)
+                .' dus x '
+                .($this->unit_per_box ?? 0)
+                .' '
+                .$this->stock_unit
+                .' = '
+                .$this->stock_quantity
+                .' '
+                .$this->stock_unit;
+        }
+
+        return $this->formatQty($this->stock_quantity)
+            .' '
+            .$this->stock_unit;
+    }
+}

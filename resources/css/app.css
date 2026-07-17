@@ -1,0 +1,17 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@import './base.css';
+@import './responsive.css';
+@import './components.css';
+@import './navbar.css';
+@import './home.css';
+@import './products.css';
+@import './cart-checkout.css';
+@import './admin.css';
+@import './settings.css';
+@import './auth.css';
+@import './misc.css';
+@import './modern-store.css';
+@import './dynamic-polish.css';

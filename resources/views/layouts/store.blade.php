@@ -26,31 +26,17 @@
         })();
     </script>
     <title>Sistem Penjualan UMKM TOKO TIKA</title>
+    
+    <!-- Vite Assets (Jika kamu menggunakan Tailwind / npm run dev) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Custom CSS (Wajib ada di public/css/style.css agar desain terbaca) -->
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const profileTrigger = document.getElementById('profileTrigger');
-    const profileMenu    = document.getElementById('profileMenu');
-
-    if (profileTrigger && profileMenu) {
-        profileTrigger.addEventListener('click', function (e) {
-            e.stopPropagation();
-            profileMenu.classList.toggle('active');
-        });
-
-        document.addEventListener('click', function (e) {
-            if (!document.getElementById('profileDropdown').contains(e.target)) {
-                profileMenu.classList.remove('active');
-            }
-        });
-    }
-});
-</script>
 
 <body>
     <script>
@@ -60,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (mobile) document.body.classList.add('has-mobile-nav');
         })();
     </script>
+
     @php
         $isAdmin = auth()->check() && auth()->user()->role && auth()->user()->role->role_name === 'admin';
     @endphp
@@ -209,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (el) el.classList.add('is-visible');
             })();
         </script>
+        
         @if(!$isAdmin)
         <section class="trust-strip">
             <div class="container trust-strip-inner">
@@ -260,18 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
     </main>
 
     <button id="backToTopBtn" class="back-to-top-btn" aria-label="Kembali ke atas"><i class="fas fa-arrow-up"></i></button>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const backToTopBtn = document.getElementById('backToTopBtn');
-        window.addEventListener('scroll', function () {
-            backToTopBtn.classList.toggle('show', window.scrollY > 500);
-        });
-        backToTopBtn.addEventListener('click', function () {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-    </script>
 
     @if(!$isAdmin)
     <footer class="site-footer">
@@ -400,7 +376,6 @@ document.addEventListener('DOMContentLoaded', function () {
     </nav>
     @endauth
 
-    {{-- ✅ FIX: Chatbot box wrapper lengkap --}}
     <div class="chatbot-box" id="chatbotBox">
         <div class="chatbot-header">
             <h4>TOKO TIKA AI</h4>
@@ -421,236 +396,269 @@ document.addEventListener('DOMContentLoaded', function () {
         </form>
     </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const siteHeader = document.getElementById('siteHeader');
-    if (siteHeader) {
-        window.addEventListener('scroll', function () {
-            siteHeader.classList.toggle('is-scrolled', window.scrollY > 20);
-        }, { passive: true });
-    }
+    <!-- SEMUA SCRIPT DIKUMPULKAN DI SINI (SEBELUM TAG PENUTUP BODY) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Profile Dropdown Logic ---
+        const profileTrigger = document.getElementById('profileTrigger');
+        const profileMenu    = document.getElementById('profileMenu');
 
-    const navMobileToggle      = document.getElementById('navMobileToggle');
-    const navMobileClose       = document.getElementById('navMobileClose');
-    const mobileDrawer         = document.getElementById('mobileDrawer');
-    const mobileDrawerBackdrop = document.getElementById('mobileDrawerBackdrop');
-    const pageTransitionRoot   = document.getElementById('pageTransitionRoot');
-    const chatbotToggle        = document.getElementById('chatbotToggle');
-    const chatbotBox           = document.getElementById('chatbotBox');
-    const chatbotReset         = document.getElementById('chatbotReset');
-    const chatbotClose         = document.getElementById('chatbotClose');
-    const chatbotForm          = document.getElementById('chatbotForm');
-    const chatbotInput         = document.getElementById('chatbotInput');
-    const chatbotBody          = document.getElementById('chatbotBody');
-    const toastWrap            = document.getElementById('toastWrap');
+        if (profileTrigger && profileMenu) {
+            profileTrigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                profileMenu.classList.toggle('active');
+            });
 
-    const toggleDrawer = (isOpen) => {
-        if (!mobileDrawer || !mobileDrawerBackdrop) return;
-        mobileDrawer.classList.toggle('active', isOpen);
-        mobileDrawerBackdrop.classList.toggle('active', isOpen);
-        document.body.classList.toggle('drawer-open', isOpen);
-        mobileDrawer.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-    };
-
-    if (navMobileToggle) navMobileToggle.addEventListener('click', () => toggleDrawer(true));
-    if (navMobileClose)  navMobileClose.addEventListener('click',  () => toggleDrawer(false));
-    if (mobileDrawerBackdrop) mobileDrawerBackdrop.addEventListener('click', () => toggleDrawer(false));
-
-    if (chatbotToggle && chatbotBox) {
-        chatbotToggle.addEventListener('click', function () {
-            chatbotBox.classList.toggle('active');
-            if (chatbotBox.classList.contains('active')) {
-                chatbotInput?.focus();
-            }
-        });
-    }
-
-    if (chatbotClose && chatbotBox) {
-        chatbotClose.addEventListener('click', () => chatbotBox.classList.remove('active'));
-    }
-
-    // ✅ Reset chat history
-    if (chatbotReset && chatbotBody) {
-        chatbotReset.addEventListener('click', async function () {
-            @auth
-            await fetch('{{ route("chatbot.reset") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById('profileDropdown').contains(e.target)) {
+                    profileMenu.classList.remove('active');
                 }
             });
-            @endauth
-            chatbotBody.innerHTML = '<div class="chatbot-message bot">Halo, chat direset. Ada yang bisa saya bantu?</div>';
+        }
+
+        // --- Back to Top Logic ---
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        window.addEventListener('scroll', function () {
+            backToTopBtn.classList.toggle('show', window.scrollY > 500);
         });
-    }
+        backToTopBtn.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
 
-    if (chatbotForm && chatbotInput && chatbotBody) {
-        chatbotForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
+        // --- Header Scroll Logic ---
+        const siteHeader = document.getElementById('siteHeader');
+        if (siteHeader) {
+            window.addEventListener('scroll', function () {
+                siteHeader.classList.toggle('is-scrolled', window.scrollY > 20);
+            }, { passive: true });
+        }
 
-            const message = chatbotInput.value.trim();
-            if (!message) return;
+        // --- Mobile Drawer Logic ---
+        const navMobileToggle      = document.getElementById('navMobileToggle');
+        const navMobileClose       = document.getElementById('navMobileClose');
+        const mobileDrawer         = document.getElementById('mobileDrawer');
+        const mobileDrawerBackdrop = document.getElementById('mobileDrawerBackdrop');
+        
+        const toggleDrawer = (isOpen) => {
+            if (!mobileDrawer || !mobileDrawerBackdrop) return;
+            mobileDrawer.classList.toggle('active', isOpen);
+            mobileDrawerBackdrop.classList.toggle('active', isOpen);
+            document.body.classList.toggle('drawer-open', isOpen);
+            mobileDrawer.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        };
 
-            const userBubble = document.createElement('div');
-            userBubble.className = 'chatbot-message user';
-            userBubble.textContent = message;
-            chatbotBody.appendChild(userBubble);
-            chatbotInput.value = '';
+        if (navMobileToggle) navMobileToggle.addEventListener('click', () => toggleDrawer(true));
+        if (navMobileClose)  navMobileClose.addEventListener('click',  () => toggleDrawer(false));
+        if (mobileDrawerBackdrop) mobileDrawerBackdrop.addEventListener('click', () => toggleDrawer(false));
 
-            const loadingBubble = document.createElement('div');
-            loadingBubble.className = 'chatbot-message bot';
-            loadingBubble.textContent = 'Sedang mengetik...';
-            chatbotBody.appendChild(loadingBubble);
-            chatbotBody.scrollTop = chatbotBody.scrollHeight;
+        // --- Chatbot Logic ---
+        const chatbotToggle        = document.getElementById('chatbotToggle');
+        const chatbotBox           = document.getElementById('chatbotBox');
+        const chatbotReset         = document.getElementById('chatbotReset');
+        const chatbotClose         = document.getElementById('chatbotClose');
+        const chatbotForm          = document.getElementById('chatbotForm');
+        const chatbotInput         = document.getElementById('chatbotInput');
+        const chatbotBody          = document.getElementById('chatbotBody');
 
-            try {
-                const response = await fetch('{{ route("chatbot.ask") }}', {
+        if (chatbotToggle && chatbotBox) {
+            chatbotToggle.addEventListener('click', function () {
+                chatbotBox.classList.toggle('active');
+                if (chatbotBox.classList.contains('active')) {
+                    chatbotInput?.focus();
+                }
+            });
+        }
+
+        if (chatbotClose && chatbotBox) {
+            chatbotClose.addEventListener('click', () => chatbotBox.classList.remove('active'));
+        }
+
+        if (chatbotReset && chatbotBody) {
+            chatbotReset.addEventListener('click', async function () {
+                @auth
+                await fetch('{{ route("chatbot.reset") }}', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ message })
+                    }
                 });
-
-                const data = await response.json();
-                loadingBubble.remove();
-
-                const botBubble = document.createElement('div');
-                botBubble.className = 'chatbot-message bot';
-                botBubble.textContent = data.reply || 'Maaf, saya belum bisa menjawab.';
-                chatbotBody.appendChild(botBubble);
-
-            } catch (error) {
-                loadingBubble.remove();
-                const errorBubble = document.createElement('div');
-                errorBubble.className = 'chatbot-message bot';
-                errorBubble.textContent = 'Terjadi kesalahan. Coba lagi ya.';
-                chatbotBody.appendChild(errorBubble);
-            }
-
-            chatbotBody.scrollTop = chatbotBody.scrollHeight;
-        });
-    }
-
-    document.querySelectorAll('.product-card-image img').forEach(function (img) {
-        const wrapper = img.closest('.product-card-image');
-        if (!wrapper) return;
-        wrapper.classList.add('is-loading');
-        if (img.complete) { wrapper.classList.remove('is-loading'); return; }
-        img.addEventListener('load',  () => wrapper.classList.remove('is-loading'));
-        img.addEventListener('error', () => wrapper.classList.remove('is-loading'));
-    });
-
-    if (toastWrap) {
-        toastWrap.querySelectorAll('.toast').forEach(function (toast, index) {
-            setTimeout(() => toast.classList.add('show'), 120 + index * 80);
-
-            const closeBtn = toast.querySelector('.toast-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function () {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 220);
-                });
-            }
-
-            setTimeout(function () {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 220);
-            }, 4200);
-        });
-    }
-
-    if (pageTransitionRoot) {
-        requestAnimationFrame(() => pageTransitionRoot.classList.add('is-visible'));
-    }
-
-    document.querySelectorAll('a[href]').forEach(function (link) {
-        link.addEventListener('click', function (event) {
-            const url = link.getAttribute('href');
-            const isInternal = !!url && (url.startsWith('/') || url.startsWith(window.location.origin));
-            const isAnchor   = url && url.startsWith('#');
-            if (!isInternal || isAnchor || link.target === '_blank' || event.ctrlKey || event.metaKey || link.closest('form')) return;
-            if (!pageTransitionRoot) return;
-            event.preventDefault();
-            pageTransitionRoot.classList.remove('is-visible');
-            setTimeout(() => window.location.href = url, 180);
-        });
-    });
-});
-
-// Navbar search
-const navbarSearchInput = document.getElementById('navbarSearchInput');
-const searchResultBox   = document.getElementById('searchResultBox');
-let searchTimer = null;
-
-if (navbarSearchInput && searchResultBox) {
-    navbarSearchInput.addEventListener('input', function () {
-        const keyword = this.value.trim();
-        clearTimer = null;
-
-        if (keyword.length < 2) {
-            searchResultBox.classList.remove('active');
-            searchResultBox.innerHTML = '';
-            return;
+                @endauth
+                chatbotBody.innerHTML = '<div class="chatbot-message bot">Halo, chat direset. Ada yang bisa saya bantu?</div>';
+            });
         }
 
-        searchTimer = setTimeout(async function () {
-            try {
-                const response = await fetch(`{{ route('products.search') }}?q=${encodeURIComponent(keyword)}`, {
-                    headers: { 'Accept': 'application/json' }
-                });
+        if (chatbotForm && chatbotInput && chatbotBody) {
+            chatbotForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
 
-                const products = await response.json();
+                const message = chatbotInput.value.trim();
+                if (!message) return;
 
-                if (!products.length) {
-                    searchResultBox.innerHTML = `<div class="search-empty">Produk tidak ditemukan.</div>`;
-                    searchResultBox.classList.add('active');
-                    return;
+                const userBubble = document.createElement('div');
+                userBubble.className = 'chatbot-message user';
+                userBubble.textContent = message;
+                chatbotBody.appendChild(userBubble);
+                chatbotInput.value = '';
+
+                const loadingBubble = document.createElement('div');
+                loadingBubble.className = 'chatbot-message bot';
+                loadingBubble.textContent = 'Sedang mengetik...';
+                chatbotBody.appendChild(loadingBubble);
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+
+                try {
+                    const response = await fetch('{{ route("chatbot.ask") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    const data = await response.json();
+                    loadingBubble.remove();
+
+                    const botBubble = document.createElement('div');
+                    botBubble.className = 'chatbot-message bot';
+                    botBubble.textContent = data.reply || 'Maaf, saya belum bisa menjawab.';
+                    chatbotBody.appendChild(botBubble);
+
+                } catch (error) {
+                    loadingBubble.remove();
+                    const errorBubble = document.createElement('div');
+                    errorBubble.className = 'chatbot-message bot';
+                    errorBubble.textContent = 'Terjadi kesalahan. Coba lagi ya.';
+                    chatbotBody.appendChild(errorBubble);
                 }
 
-                searchResultBox.innerHTML = products.map(function (product) {
-                    const image = product.image
-                        ? `<img src="${product.image}" alt="${product.name}">`
-                        : `<div class="search-product-placeholder"><i class="fas fa-box"></i></div>`;
-
-                    return `
-                        <a href="${product.url}" class="search-result-item">
-                             <div class="search-result-image">${image}</div>
-                             <div class="search-result-content">
-                                 <strong>${product.name}</strong>
-                                 <span>${product.category}</span>
-                                 <small>${product.price}</small>
-                             </div>
-                        </a>
-                    `;
-                }).join('');
-
-                searchResultBox.classList.add('active');
-            } catch (error) {
-                searchResultBox.innerHTML = `<div class="search-empty">Terjadi kesalahan saat mencari produk.</div>`;
-                searchResultBox.classList.add('active');
-            }
-        }, 300);
-    });
-
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('.navbar-search')) {
-            searchResultBox.classList.remove('active');
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+            });
         }
+
+        // --- Product Image Loading State ---
+        document.querySelectorAll('.product-card-image img').forEach(function (img) {
+            const wrapper = img.closest('.product-card-image');
+            if (!wrapper) return;
+            wrapper.classList.add('is-loading');
+            if (img.complete) { wrapper.classList.remove('is-loading'); return; }
+            img.addEventListener('load',  () => wrapper.classList.remove('is-loading'));
+            img.addEventListener('error', () => wrapper.classList.remove('is-loading'));
+        });
+
+        // --- Toast Notifications ---
+        const toastWrap = document.getElementById('toastWrap');
+        if (toastWrap) {
+            toastWrap.querySelectorAll('.toast').forEach(function (toast, index) {
+                setTimeout(() => toast.classList.add('show'), 120 + index * 80);
+
+                const closeBtn = toast.querySelector('.toast-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function () {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 220);
+                    });
+                }
+
+                setTimeout(function () {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 220);
+                }, 4200);
+            });
+        }
+
+        // --- Page Transition Logic ---
+        const pageTransitionRoot = document.getElementById('pageTransitionRoot');
+        if (pageTransitionRoot) {
+            requestAnimationFrame(() => pageTransitionRoot.classList.add('is-visible'));
+        }
+
+        document.querySelectorAll('a[href]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                const url = link.getAttribute('href');
+                const isInternal = !!url && (url.startsWith('/') || url.startsWith(window.location.origin));
+                const isAnchor   = url && url.startsWith('#');
+                if (!isInternal || isAnchor || link.target === '_blank' || event.ctrlKey || event.metaKey || link.closest('form')) return;
+                if (!pageTransitionRoot) return;
+                event.preventDefault();
+                pageTransitionRoot.classList.remove('is-visible');
+                setTimeout(() => window.location.href = url, 180);
+            });
+        });
     });
 
-    navbarSearchInput.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            const keyword = navbarSearchInput.value.trim();
-            if (keyword.length > 0) {
-                window.location.href = `{{ route('products.index') }}?search=${encodeURIComponent(keyword)}`;
+    // --- Navbar Search Logic ---
+    const navbarSearchInput = document.getElementById('navbarSearchInput');
+    const searchResultBox   = document.getElementById('searchResultBox');
+    let searchTimer = null;
+
+    if (navbarSearchInput && searchResultBox) {
+        navbarSearchInput.addEventListener('input', function () {
+            const keyword = this.value.trim();
+            if(searchTimer) clearTimeout(searchTimer);
+
+            if (keyword.length < 2) {
+                searchResultBox.classList.remove('active');
+                searchResultBox.innerHTML = '';
+                return;
             }
-        }
-    });
-}
-</script>
+
+            searchTimer = setTimeout(async function () {
+                try {
+                    const response = await fetch(`{{ route('products.search') }}?q=${encodeURIComponent(keyword)}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    const products = await response.json();
+
+                    if (!products.length) {
+                        searchResultBox.innerHTML = `<div class="search-empty">Produk tidak ditemukan.</div>`;
+                        searchResultBox.classList.add('active');
+                        return;
+                    }
+
+                    searchResultBox.innerHTML = products.map(function (product) {
+                        const image = product.image
+                            ? `<img src="${product.image}" alt="${product.name}">`
+                            : `<div class="search-product-placeholder"><i class="fas fa-box"></i></div>`;
+
+                        return `
+                            <a href="${product.url}" class="search-result-item">
+                                 <div class="search-result-image">${image}</div>
+                                 <div class="search-result-content">
+                                     <strong>${product.name}</strong>
+                                     <span>${product.category}</span>
+                                     <small>${product.price}</small>
+                                 </div>
+                            </a>
+                        `;
+                    }).join('');
+
+                    searchResultBox.classList.add('active');
+                } catch (error) {
+                    searchResultBox.innerHTML = `<div class="search-empty">Terjadi kesalahan saat mencari produk.</div>`;
+                    searchResultBox.classList.add('active');
+                }
+            }, 300);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.navbar-search')) {
+                searchResultBox.classList.remove('active');
+            }
+        });
+
+        navbarSearchInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const keyword = navbarSearchInput.value.trim();
+                if (keyword.length > 0) {
+                    window.location.href = `{{ route('products.index') }}?search=${encodeURIComponent(keyword)}`;
+                }
+            }
+        });
+    }
+    </script>
 </body>
 </html>

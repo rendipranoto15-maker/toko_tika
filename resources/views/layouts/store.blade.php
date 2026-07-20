@@ -31,7 +31,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <!-- Custom CSS (Wajib ada di public/css/style.css agar desain terbaca) -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -475,14 +474,12 @@
 
         if (chatbotReset && chatbotBody) {
             chatbotReset.addEventListener('click', async function () {
-                @auth
                 await fetch('{{ route("chatbot.reset") }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
                     }
                 });
-                @endauth
                 chatbotBody.innerHTML = '<div class="chatbot-message bot">Halo, chat direset. Ada yang bisa saya bantu?</div>';
             });
         }

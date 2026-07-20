@@ -190,12 +190,12 @@ PROMPT;
                 ->timeout(15)
                 ->acceptJson()
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-                    'HTTP-Referer'  => env('APP_URL'),
-                    'X-Title'       => env('APP_NAME'),
+                    'Authorization' => 'Bearer ' . config('services.openrouter.api_key'),
+                    'HTTP-Referer'  => config('app.url'),
+                    'X-Title'       => config('app.name'),
                 ])
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model'       => env('OPENROUTER_MODEL', 'deepseek/deepseek-chat-v3-0324'),
+                    'model'       => config('services.openrouter.model', 'deepseek/deepseek-chat-v3-0324'),
                     'messages'    => $inputMessages,
                     'max_tokens'  => 200,
                     'temperature' => 0.7,

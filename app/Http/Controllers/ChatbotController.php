@@ -46,7 +46,8 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'item') ||
             str_contains($messageLower, 'menu') ||
             str_contains($messageLower, 'tersedia') ||
-            str_contains($messageLower, 'ada');
+            str_contains($messageLower, 'ada') ||
+            str_contains($messageLower, 'berapa');
 
         $isOrderQuestion =
             str_contains($messageLower, 'pesanan') ||
@@ -63,17 +64,25 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'checkout');
 
         // ─────────────────────────────────────────
-        // Data produk & kategori — selalu fresh
-        // Kategori toko selalu di-load sebagai metadata dasar toko
+        // Data statistik & kategori — selalu fresh
         // ─────────────────────────────────────────
-        $categories = Category::pluck('category_name')->toArray();
-        $products   = [];
+        $totalActiveProducts = Product::where('status', 'active')->count();
+
+        $categories = Category::withCount(['products' => fn($q) => $q->where('status', 'active')])
+            ->get()
+            ->map(fn($c) => [
+                'kategori' => $c->category_name,
+                'jumlah'   => $c->products_count . ' produk',
+            ])
+            ->toArray();
+
+        $products = [];
 
         if ($isProductQuestion) {
             $products = Product::where('status', 'active')
                 ->with('category')
                 ->latest('updated_at')
-                ->limit(10)
+                ->limit(50)
                 ->get()
                 ->map(fn($p) => [
                     'nama'     => $p->name,
@@ -143,15 +152,16 @@ class ChatbotController extends Controller
         // Konteks toko
         // ─────────────────────────────────────────
         $storeContext = [
-            'nama_toko'    => 'Toko Tika',
-            'deskripsi'    => 'Toko UMKM modern untuk kebutuhan harian.',
-            'jam_buka'     => '08:00 - 18:00 WIB',
-            'alamat'       => 'Pasar Rawa Kalong, Bekasi',
-            'kontak'       => '0821-2505-2233',
-            'kategori'     => $categories,
-            'produk'       => $products,
-            'pesanan_user' => $orderData,
-            'keranjang'    => $cartData,
+            'nama_toko'             => 'Toko Tika',
+            'deskripsi'             => 'Toko UMKM modern untuk kebutuhan harian.',
+            'jam_buka'              => '08:00 - 18:00 WIB',
+            'alamat'                => 'Pasar Rawa Kalong, Bekasi',
+            'kontak'                => '0821-2505-2233',
+            'total_produk_tersedia' => $totalActiveProducts . ' produk',
+            'kategori'              => $categories,
+            'daftar_produk'         => $products,
+            'pesanan_user'          => $orderData,
+            'keranjang'             => $cartData,
         ];
 
         // ─────────────────────────────────────────
@@ -164,11 +174,12 @@ Aturan:
 1. Jawab dalam Bahasa Indonesia.
 2. Jawab singkat, jelas, ramah, natural.
 3. Maksimal 3-5 kalimat kecuali user meminta detail.
-4. Jangan mengarang stok atau harga — gunakan data yang diberikan.
-5. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
-6. Jika ada data keranjang, bantu user memahami isi belanjaannya.
-7. Ingat konteks percakapan sebelumnya untuk menjawab dengan baik.
-8. Kalau tidak tahu, jujur dan sarankan hubungi admin.
+4. Jika user bertanya berapa total jumlah produk yang ada di toko, gunakan data 'total_produk_tersedia' (yaitu {$totalActiveProducts} produk).
+5. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks.
+6. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
+7. Jika ada data keranjang, bantu user memahami isi belanjaannya.
+8. Ingat konteks percakapan sebelumnya untuk menjawab dengan baik.
+9. Kalau tidak tahu, jujur dan sarankan hubungi admin.
 PROMPT;
 
         // ─────────────────────────────────────────

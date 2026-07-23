@@ -42,10 +42,6 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'berapa banyak') ||
             str_contains($messageLower, 'berapa total') ||
             str_contains($messageLower, 'berapa produk') ||
-            str_contains($messageLower, 'masih sama') ||
-            str_contains($messageLower, 'kok 8') ||
-            str_contains($messageLower, 'kok 6') ||
-            str_contains($messageLower, '32') ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'berapa')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'total')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'jumlah')) ||

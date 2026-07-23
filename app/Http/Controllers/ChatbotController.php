@@ -23,7 +23,14 @@ class ChatbotController extends Controller
         $messageLower = strtolower($userMessage);
 
         // ─────────────────────────────────────────
-        // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Garansi Akurat 32 PRODUK)
+        // Data statistik & kategori — selalu fresh
+        // ─────────────────────────────────────────
+        $totalAllProducts    = Product::count();
+        $totalActiveProducts = Product::where('status', 'active')->count();
+        $totalInactive       = max(0, $totalAllProducts - $totalActiveProducts);
+
+        // ─────────────────────────────────────────
+        // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Dinamis Sesuai Database)
         // ─────────────────────────────────────────
         $isCountQuestion =
             str_contains($messageLower, 'total produk') ||
@@ -42,8 +49,11 @@ class ChatbotController extends Controller
             (str_contains($messageLower, 'tersedia') && str_contains($messageLower, 'berapa'));
 
         if ($isCountQuestion) {
-            $count = max(Product::count(), Product::where('status', 'active')->count(), 32);
-            $reply = "Saat ini Toko Tika memiliki total **{$count} produk** yang tersedia di katalog toko. Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
+            $reply = "Saat ini di database Toko Tika terdapat **{$totalAllProducts} produk terdaftar** ({$totalActiveProducts} produk aktif siap beli";
+            if ($totalInactive > 0) {
+                $reply .= " dan {$totalInactive} produk kosong/non-aktif";
+            }
+            $reply .= "). Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
 
             $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
             $history    = session($sessionKey, []);

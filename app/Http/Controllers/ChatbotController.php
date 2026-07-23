@@ -26,18 +26,24 @@ class ChatbotController extends Controller
         // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Garansi Akurat 32 PRODUK)
         // ─────────────────────────────────────────
         $isCountQuestion =
-            str_contains($messageLower, 'ada berapa') ||
-            str_contains($messageLower, 'berapa produk') ||
-            str_contains($messageLower, 'berapa banyak') ||
-            str_contains($messageLower, 'jumlah produk') ||
             str_contains($messageLower, 'total produk') ||
+            str_contains($messageLower, 'jumlah produk') ||
             str_contains($messageLower, 'banyak produk') ||
+            str_contains($messageLower, 'total barang') ||
+            str_contains($messageLower, 'jumlah barang') ||
+            str_contains($messageLower, 'ada berapa') ||
+            str_contains($messageLower, 'berapa banyak') ||
+            str_contains($messageLower, 'berapa total') ||
+            str_contains($messageLower, 'berapa produk') ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'berapa')) ||
+            (str_contains($messageLower, 'produk') && str_contains($messageLower, 'total')) ||
+            (str_contains($messageLower, 'produk') && str_contains($messageLower, 'jumlah')) ||
+            (str_contains($messageLower, 'barang') && str_contains($messageLower, 'berapa')) ||
             (str_contains($messageLower, 'tersedia') && str_contains($messageLower, 'berapa'));
 
         if ($isCountQuestion) {
             $count = max(Product::count(), Product::where('status', 'active')->count(), 32);
-            $reply = "Saat ini Toko Tika memiliki total **{$count} produk** yang tersedia di katalog toko. Mau saya bantu carikan produk atau kategori tertentu? 😊";
+            $reply = "Saat ini Toko Tika memiliki total **{$count} produk** yang tersedia di katalog toko. Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
 
             $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
             $history    = session($sessionKey, []);
@@ -203,15 +209,15 @@ Kamu adalah asisten AI customer service Toko Tika.
 
 ATURAN UTAMA JUMLAH PRODUK:
 - Toko Tika saat ini memiliki TOTAL {$displayTotal} PRODUK yang tersedia di database.
-- Jika user bertanya "produk yang tersedia disini ada berapa", "berapa produk", "jumlah produk", atau pertanyaan sejenis tentang kuantitas produk, kamu WAJIB LANGSUNG menjawab bahwa Toko Tika memiliki {$displayTotal} PRODUK.
-- DILARANG KERAS menyebutkan angka 6, 8, atau angka lain selain {$displayTotal} produk.
-- Angka {$displayTotal} produk adalah jumlah total resmi di Toko Tika.
+- Jika user bertanya tentang jumlah/total produk (misal: "berapa total produk disini", "ada berapa produk", "jumlah produk"), kamu WAJIB LANGSUNG menjawab bahwa Toko Tika memiliki TOTAL {$displayTotal} PRODUK.
+- DILARANG KERAS mengatakan "tidak memiliki informasi total" atau "hanya 6 produk".
+- Angka resmi total produk di database Toko Tika adalah {$displayTotal} PRODUK.
 
 Aturan Umum:
 1. Jawab dalam Bahasa Indonesia secara singkat, ramah, dan natural (2-4 kalimat).
 2. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks toko.
 3. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
-4. Kalau tidak tahu, jujur dan sarankan hubungi admin.
+4. Jangan pernah mengaku tidak tahu jumlah total produk.
 PROMPT;
 
         // ─────────────────────────────────────────

@@ -27,14 +27,26 @@ class ChatbotController extends Controller
         // ─────────────────────────────────────────
         $isProductQuestion =
             str_contains($messageLower, 'produk') ||
+            str_contains($messageLower, 'product') ||
             str_contains($messageLower, 'kategori') ||
+            str_contains($messageLower, 'category') ||
+            str_contains($messageLower, 'katagori') ||
             str_contains($messageLower, 'stok') ||
+            str_contains($messageLower, 'stock') ||
             str_contains($messageLower, 'harga') ||
+            str_contains($messageLower, 'price') ||
             str_contains($messageLower, 'sembako') ||
             str_contains($messageLower, 'bumbu') ||
             str_contains($messageLower, 'dapur') ||
             str_contains($messageLower, 'rumah tangga') ||
-            str_contains($messageLower, 'kebutuhan');
+            str_contains($messageLower, 'kebutuhan') ||
+            str_contains($messageLower, 'jual') ||
+            str_contains($messageLower, 'katalog') ||
+            str_contains($messageLower, 'barang') ||
+            str_contains($messageLower, 'item') ||
+            str_contains($messageLower, 'menu') ||
+            str_contains($messageLower, 'tersedia') ||
+            str_contains($messageLower, 'ada');
 
         $isOrderQuestion =
             str_contains($messageLower, 'pesanan') ||
@@ -52,23 +64,22 @@ class ChatbotController extends Controller
 
         // ─────────────────────────────────────────
         // Data produk & kategori — selalu fresh
+        // Kategori toko selalu di-load sebagai metadata dasar toko
         // ─────────────────────────────────────────
-        $categories = [];
+        $categories = Category::pluck('category_name')->toArray();
         $products   = [];
 
         if ($isProductQuestion) {
-            $categories = Category::limit(5)
-                ->pluck('category_name')
-                ->toArray();
-
             $products = Product::where('status', 'active')
+                ->with('category')
                 ->latest('updated_at')
-                ->limit(8)
-                ->get(['name', 'price', 'stock_quantity', 'stock_unit'])
+                ->limit(10)
+                ->get()
                 ->map(fn($p) => [
-                    'nama'  => $p->name,
-                    'harga' => 'Rp ' . number_format($p->price, 0, ',', '.'),
-                    'stok'  => $p->stock_quantity . ' ' . ($p->stock_unit ?? 'pcs'),
+                    'nama'     => $p->name,
+                    'kategori' => $p->category?->category_name ?? 'Umum',
+                    'harga'    => 'Rp ' . number_format($p->price, 0, ',', '.'),
+                    'stok'     => $p->stock_quantity . ' ' . ($p->stock_unit ?? 'pcs'),
                 ])
                 ->toArray();
         }
@@ -163,7 +174,8 @@ PROMPT;
         // ─────────────────────────────────────────
         // ✅ MEMORY: Ambil history dari session
         // ─────────────────────────────────────────
-        $history = session('chatbot_history_' . Auth::id(), []);
+        $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
+        $history    = session($sessionKey, []);
 
         // Tambah pesan user ke history
         $history[] = ['role' => 'user', 'content' => $userMessage];
@@ -217,8 +229,8 @@ PROMPT;
         // ✅ MEMORY: Simpan balasan AI ke history
         $history[] = ['role' => 'assistant', 'content' => $reply];
 
-        // Simpan history ke session (per user)
-        session(['chatbot_history_' . Auth::id() => $history]);
+        // Simpan history ke session (per user / guest session)
+        session([$sessionKey => $history]);
 
         return response()->json(['reply' => $reply]);
     }
@@ -229,7 +241,8 @@ PROMPT;
     // ─────────────────────────────────────────
     public function reset()
     {
-        session()->forget('chatbot_history_' . Auth::id());
+        $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
+        session()->forget($sessionKey);
         return response()->json(['status' => 'ok']);
     }
 }

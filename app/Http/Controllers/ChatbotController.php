@@ -47,7 +47,8 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'menu') ||
             str_contains($messageLower, 'tersedia') ||
             str_contains($messageLower, 'ada') ||
-            str_contains($messageLower, 'berapa');
+            str_contains($messageLower, 'berapa') ||
+            str_contains($messageLower, 'sama');
 
         $isOrderQuestion =
             str_contains($messageLower, 'pesanan') ||
@@ -67,8 +68,10 @@ class ChatbotController extends Controller
         // Data statistik & kategori — selalu fresh
         // ─────────────────────────────────────────
         $totalActiveProducts = Product::where('status', 'active')->count();
+        $totalAllProducts    = Product::count();
+        $displayTotal        = max($totalActiveProducts, $totalAllProducts);
 
-        $categories = Category::withCount(['products' => fn($q) => $q->where('status', 'active')])
+        $categories = Category::withCount('products')
             ->get()
             ->map(fn($c) => [
                 'kategori' => $c->category_name,
@@ -79,8 +82,7 @@ class ChatbotController extends Controller
         $products = [];
 
         if ($isProductQuestion) {
-            $products = Product::where('status', 'active')
-                ->with('category')
+            $products = Product::with('category')
                 ->latest('updated_at')
                 ->limit(50)
                 ->get()
@@ -157,7 +159,7 @@ class ChatbotController extends Controller
             'jam_buka'              => '08:00 - 18:00 WIB',
             'alamat'                => 'Pasar Rawa Kalong, Bekasi',
             'kontak'                => '0821-2505-2233',
-            'total_produk_tersedia' => $totalActiveProducts . ' produk',
+            'total_produk_tersedia' => $displayTotal . ' produk',
             'kategori'              => $categories,
             'daftar_produk'         => $products,
             'pesanan_user'          => $orderData,
@@ -170,16 +172,14 @@ class ChatbotController extends Controller
         $systemPrompt = <<<PROMPT
 Kamu adalah asisten AI customer service Toko Tika.
 
-Aturan:
-1. Jawab dalam Bahasa Indonesia.
-2. Jawab singkat, jelas, ramah, natural.
-3. Maksimal 3-5 kalimat kecuali user meminta detail.
-4. Jika user bertanya berapa total jumlah produk yang ada di toko, gunakan data 'total_produk_tersedia' (yaitu {$totalActiveProducts} produk).
-5. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks.
-6. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
-7. Jika ada data keranjang, bantu user memahami isi belanjaannya.
-8. Ingat konteks percakapan sebelumnya untuk menjawab dengan baik.
-9. Kalau tidak tahu, jujur dan sarankan hubungi admin.
+Aturan Penting:
+1. Jawab dalam Bahasa Indonesia secara singkat, ramah, dan natural (3-5 kalimat).
+2. PENTING DATA PRODUK: Toko Tika memiliki TOTAL {$displayTotal} produk di database. Jika user bertanya berapa jumlah/total produk yang ada di toko, kamu WAJIB menjawab bahwa Toko Tika memiliki {$displayTotal} produk.
+3. DILARANG KERAS mengatakan Toko Tika hanya memiliki 8 produk atau data lama dari percakapan sebelumnya. Selalu gunakan nilai 'total_produk_tersedia' yaitu {$displayTotal} produk.
+4. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks toko.
+5. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
+6. Jika ada data keranjang, bantu user memahami isi belanjaannya.
+7. Kalau tidak tahu, jujur dan sarankan hubungi admin.
 PROMPT;
 
         // ─────────────────────────────────────────
@@ -200,7 +200,7 @@ PROMPT;
         $inputMessages = array_merge(
             [
                 ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'system', 'content' => 'Data toko: ' . json_encode($storeContext, JSON_UNESCAPED_UNICODE)],
+                ['role' => 'system', 'content' => 'Data toko terbaru: ' . json_encode($storeContext, JSON_UNESCAPED_UNICODE)],
             ],
             $history
         );

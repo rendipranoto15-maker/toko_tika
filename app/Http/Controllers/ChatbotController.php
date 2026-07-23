@@ -42,6 +42,10 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'berapa banyak') ||
             str_contains($messageLower, 'berapa total') ||
             str_contains($messageLower, 'berapa produk') ||
+            str_contains($messageLower, 'masih sama') ||
+            str_contains($messageLower, 'kok 8') ||
+            str_contains($messageLower, 'kok 6') ||
+            str_contains($messageLower, '32') ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'berapa')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'total')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'jumlah')) ||
@@ -52,12 +56,11 @@ class ChatbotController extends Controller
             $reply = "Saat ini Toko Tika memiliki total **{$displayTotal} produk** yang tersedia di katalog toko. Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
 
             $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
-            $history    = session($sessionKey, []);
-            $history[]  = ['role' => 'user', 'content' => $userMessage];
-            $history[]  = ['role' => 'assistant', 'content' => $reply];
-            if (count($history) > 10) {
-                $history = array_slice($history, -10);
-            }
+            // Reset history ke state bersih agar riwayat 8 produk tidak tersimpan lagi
+            $history = [
+                ['role' => 'user', 'content' => $userMessage],
+                ['role' => 'assistant', 'content' => $reply]
+            ];
             session([$sessionKey => $history]);
 
             return response()->json(['reply' => $reply]);
@@ -234,6 +237,12 @@ PROMPT;
 
         // Tambah pesan user ke history
         $history[] = ['role' => 'user', 'content' => $userMessage];
+
+        // Filter history: hapus pesan lama dari assistant yang pernah menyebutkan '8 produk', '6 produk', atau '8 jenis'
+        $history = array_values(array_filter($history, function ($item) {
+            $content = strtolower($item['content'] ?? '');
+            return !str_contains($content, '8 produk') && !str_contains($content, '6 produk') && !str_contains($content, '8 jenis');
+        }));
 
         // Batasi 10 pesan terakhir agar tidak terlalu panjang
         if (count($history) > 10) {

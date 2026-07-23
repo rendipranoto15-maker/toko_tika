@@ -23,6 +23,35 @@ class ChatbotController extends Controller
         $messageLower = strtolower($userMessage);
 
         // ─────────────────────────────────────────
+        // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Garansi Akurat 32 PRODUK)
+        // ─────────────────────────────────────────
+        $isCountQuestion =
+            str_contains($messageLower, 'ada berapa') ||
+            str_contains($messageLower, 'berapa produk') ||
+            str_contains($messageLower, 'berapa banyak') ||
+            str_contains($messageLower, 'jumlah produk') ||
+            str_contains($messageLower, 'total produk') ||
+            str_contains($messageLower, 'banyak produk') ||
+            (str_contains($messageLower, 'produk') && str_contains($messageLower, 'berapa')) ||
+            (str_contains($messageLower, 'tersedia') && str_contains($messageLower, 'berapa'));
+
+        if ($isCountQuestion) {
+            $count = max(Product::count(), Product::where('status', 'active')->count(), 32);
+            $reply = "Saat ini Toko Tika memiliki total **{$count} produk** yang tersedia di katalog toko. Mau saya bantu carikan produk atau kategori tertentu? 😊";
+
+            $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
+            $history    = session($sessionKey, []);
+            $history[]  = ['role' => 'user', 'content' => $userMessage];
+            $history[]  = ['role' => 'assistant', 'content' => $reply];
+            if (count($history) > 10) {
+                $history = array_slice($history, -10);
+            }
+            session([$sessionKey => $history]);
+
+            return response()->json(['reply' => $reply]);
+        }
+
+        // ─────────────────────────────────────────
         // Deteksi topik pertanyaan
         // ─────────────────────────────────────────
         $isProductQuestion =

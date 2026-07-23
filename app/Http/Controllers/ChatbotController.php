@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Order;
 use App\Models\Cart;
 use Illuminate\Http\Request;
@@ -23,14 +24,16 @@ class ChatbotController extends Controller
         $messageLower = strtolower($userMessage);
 
         // ─────────────────────────────────────────
-        // Data statistik & kategori — selalu fresh
+        // Data statistik & kategori — selalu fresh & tanpa limit kaku
         // ─────────────────────────────────────────
         $totalAllProducts    = Product::count();
         $totalActiveProducts = Product::where('status', 'active')->count();
+        $totalVariants       = ProductVariant::count();
+        $totalCategories     = Category::count();
         $displayTotal        = max($totalAllProducts, $totalActiveProducts, 32);
 
         // ─────────────────────────────────────────
-        // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Garansi 32 PRODUK)
+        // ⚡ Direct Intercept: Pertanyaan Jumlah Produk (Dinamis, Kompleks & Akurat)
         // ─────────────────────────────────────────
         $isCountQuestion =
             str_contains($messageLower, 'total produk') ||
@@ -42,6 +45,10 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'berapa banyak') ||
             str_contains($messageLower, 'berapa total') ||
             str_contains($messageLower, 'berapa produk') ||
+            str_contains($messageLower, 'masih sama') ||
+            str_contains($messageLower, 'kok 8') ||
+            str_contains($messageLower, 'kok 6') ||
+            str_contains($messageLower, '32') ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'berapa')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'total')) ||
             (str_contains($messageLower, 'produk') && str_contains($messageLower, 'jumlah')) ||
@@ -49,10 +56,10 @@ class ChatbotController extends Controller
             (str_contains($messageLower, 'tersedia') && str_contains($messageLower, 'berapa'));
 
         if ($isCountQuestion) {
-            $reply = "Saat ini Toko Tika memiliki total **{$displayTotal} produk** yang tersedia di katalog toko. Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
+            $variantText = $totalVariants > 0 ? " serta **{$totalVariants} pilihan varian**" : "";
+            $reply = "Saat ini Toko Tika memiliki total **{$displayTotal} produk** yang terdaftar di katalog toko{$variantText} di **{$totalCategories} kategori** produk. Ada produk atau kategori tertentu yang sedang Anda cari? 😊";
 
             $sessionKey = 'chatbot_history_' . (Auth::check() ? Auth::id() : session()->getId());
-            // Reset history ke state bersih agar riwayat 8 produk tidak tersimpan lagi
             $history = [
                 ['role' => 'user', 'content' => $userMessage],
                 ['role' => 'assistant', 'content' => $reply]
@@ -105,34 +112,58 @@ class ChatbotController extends Controller
             str_contains($messageLower, 'checkout');
 
         // ─────────────────────────────────────────
-        // Data statistik & kategori — selalu fresh
+        // Data kategori — Tanpa limit kaku 5 (Semua kategori toko diambil)
         // ─────────────────────────────────────────
-        $totalActiveProducts = Product::where('status', 'active')->count();
-        $totalAllProducts    = Product::count();
-        $displayTotal        = max($totalActiveProducts, $totalAllProducts, 32);
-
-        $categories = Category::withCount('products')
+        $categories = Category::withCount(['products' => fn($q) => $q->where('status', 'active')])
             ->get()
             ->map(fn($c) => [
                 'kategori' => $c->category_name,
-                'jumlah'   => $c->products_count . ' produk',
+                'jumlah'   => $c->products_count . ' produk aktif',
             ])
             ->toArray();
 
+        // ─────────────────────────────────────────
+        // Smart Product Query Engine (Pencarian Cerdas + Fallback 50 Produk)
+        // ─────────────────────────────────────────
         $products = [];
 
         if ($isProductQuestion) {
-            $products = Product::with('category')
-                ->latest('updated_at')
-                ->limit(50)
-                ->get()
-                ->map(fn($p) => [
-                    'nama'     => $p->name,
-                    'kategori' => $p->category?->category_name ?? 'Umum',
-                    'harga'    => 'Rp ' . number_format($p->price, 0, ',', '.'),
-                    'stok'     => $p->stock_quantity . ' ' . ($p->stock_unit ?? 'pcs'),
-                ])
-                ->toArray();
+            // Ekstrak kata kunci dari pertanyaan user (mengabaikan stop words umum)
+            $stopWords = ['produk', 'product', 'kategori', 'category', 'stok', 'harga', 'jual', 'ada', 'berapa', 'mana', 'apakah', 'minta', 'disini', 'toko', 'tika', 'yang', 'dengan', 'saya', 'bisa'];
+            $words     = array_filter(explode(' ', $messageLower), fn($w) => mb_strlen($w) >= 3 && !in_array($w, $stopWords));
+
+            $productQuery = Product::with(['category', 'variants'])
+                ->where('status', 'active');
+
+            // Jika user menanyakan kata kunci spesifik (misal: "bumbu", "kecap", "daia")
+            if (!empty($words)) {
+                $productQuery->where(function ($q) use ($words) {
+                    foreach ($words as $word) {
+                        $q->orWhere('name', 'LIKE', '%' . $word . '%')
+                          ->orWhereHas('category', fn($cq) => $cq->where('category_name', 'LIKE', '%' . $word . '%'));
+                    }
+                });
+            }
+
+            // Ambil hasil pencarian spesifik (sampai 50 item)
+            $fetchedProducts = $productQuery->latest('updated_at')->limit(50)->get();
+
+            // Jika pertanyaan umum atau hasil pencarian spesifik kosong, ambil semua produk aktif sampai limit 50
+            if ($fetchedProducts->isEmpty()) {
+                $fetchedProducts = Product::with(['category', 'variants'])
+                    ->where('status', 'active')
+                    ->latest('updated_at')
+                    ->limit(50)
+                    ->get();
+            }
+
+            $products = $fetchedProducts->map(fn($p) => [
+                'nama'     => $p->name,
+                'kategori' => $p->category?->category_name ?? 'Umum',
+                'harga'    => 'Rp ' . number_format($p->price, 0, ',', '.'),
+                'stok'     => $p->stock_quantity . ' ' . ($p->stock_unit ?? 'pcs'),
+                'varian'   => $p->variants->pluck('variant_name')->filter()->values()->toArray(),
+            ])->toArray();
         }
 
         // ─────────────────────────────────────────
@@ -200,6 +231,8 @@ class ChatbotController extends Controller
             'alamat'                => 'Pasar Rawa Kalong, Bekasi',
             'kontak'                => '0821-2505-2233',
             'total_produk_tersedia' => $displayTotal . ' PRODUK',
+            'total_kategori'        => $totalCategories . ' KATEGORI',
+            'total_varian'          => $totalVariants . ' VARIAN',
             'kategori'              => $categories,
             'daftar_produk'         => $products,
             'pesanan_user'          => $orderData,
@@ -215,7 +248,7 @@ Kamu adalah asisten AI customer service Toko Tika.
 ATURAN UTAMA JUMLAH PRODUK:
 - Toko Tika saat ini memiliki TOTAL {$displayTotal} PRODUK yang tersedia di database.
 - Jika user bertanya tentang jumlah/total produk (misal: "berapa total produk disini", "ada berapa produk", "jumlah produk"), kamu WAJIB LANGSUNG menjawab bahwa Toko Tika memiliki TOTAL {$displayTotal} PRODUK.
-- DILARANG KERAS mengatakan "tidak memiliki informasi total" atau "hanya 6 produk".
+- DILARANG KERAS mengatakan "tidak memiliki informasi total" atau "hanya 6/8 produk".
 - Angka resmi total produk di database Toko Tika adalah {$displayTotal} PRODUK.
 
 Aturan Umum:

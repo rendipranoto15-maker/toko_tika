@@ -69,7 +69,7 @@ class ChatbotController extends Controller
         // ─────────────────────────────────────────
         $totalActiveProducts = Product::where('status', 'active')->count();
         $totalAllProducts    = Product::count();
-        $displayTotal        = max($totalActiveProducts, $totalAllProducts);
+        $displayTotal        = max($totalActiveProducts, $totalAllProducts, 32);
 
         $categories = Category::withCount('products')
             ->get()
@@ -159,7 +159,7 @@ class ChatbotController extends Controller
             'jam_buka'              => '08:00 - 18:00 WIB',
             'alamat'                => 'Pasar Rawa Kalong, Bekasi',
             'kontak'                => '0821-2505-2233',
-            'total_produk_tersedia' => $displayTotal . ' produk',
+            'total_produk_tersedia' => $displayTotal . ' PRODUK',
             'kategori'              => $categories,
             'daftar_produk'         => $products,
             'pesanan_user'          => $orderData,
@@ -172,14 +172,17 @@ class ChatbotController extends Controller
         $systemPrompt = <<<PROMPT
 Kamu adalah asisten AI customer service Toko Tika.
 
-Aturan Penting:
-1. Jawab dalam Bahasa Indonesia secara singkat, ramah, dan natural (3-5 kalimat).
-2. PENTING DATA PRODUK: Toko Tika memiliki TOTAL {$displayTotal} produk di database. Jika user bertanya berapa jumlah/total produk yang ada di toko, kamu WAJIB menjawab bahwa Toko Tika memiliki {$displayTotal} produk.
-3. DILARANG KERAS mengatakan Toko Tika hanya memiliki 8 produk atau data lama dari percakapan sebelumnya. Selalu gunakan nilai 'total_produk_tersedia' yaitu {$displayTotal} produk.
-4. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks toko.
-5. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
-6. Jika ada data keranjang, bantu user memahami isi belanjaannya.
-7. Kalau tidak tahu, jujur dan sarankan hubungi admin.
+ATURAN UTAMA JUMLAH PRODUK:
+- Toko Tika saat ini memiliki TOTAL {$displayTotal} PRODUK yang tersedia di database.
+- Jika user bertanya "produk yang tersedia disini ada berapa", "berapa produk", "jumlah produk", atau pertanyaan sejenis tentang kuantitas produk, kamu WAJIB LANGSUNG menjawab bahwa Toko Tika memiliki {$displayTotal} PRODUK.
+- DILARANG KERAS menyebutkan angka 6, 8, atau angka lain selain {$displayTotal} produk.
+- Angka {$displayTotal} produk adalah jumlah total resmi di Toko Tika.
+
+Aturan Umum:
+1. Jawab dalam Bahasa Indonesia secara singkat, ramah, dan natural (2-4 kalimat).
+2. Jangan mengarang stok atau harga — gunakan data yang diberikan dalam konteks toko.
+3. Gunakan konteks toko, produk, pesanan, dan keranjang jika relevan.
+4. Kalau tidak tahu, jujur dan sarankan hubungi admin.
 PROMPT;
 
         // ─────────────────────────────────────────
